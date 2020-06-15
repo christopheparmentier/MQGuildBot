@@ -6,6 +6,7 @@ except ImportError:
     import Image
 import pytesseract
 import os
+import re
 
 
 # Crop and Extracct Data from an Image and Return another image containing Relevant Data
@@ -47,6 +48,48 @@ def MQCropImage ( srcimg ):
     #mergeFilteredImage.show()
     return mergeFilteredImage
 
+def splitBotScore ( scoreLine ):
+    words = scoreLine.split()
+    botName=words[len(words)-2]
+    score=words[len(words)-1]
+    score=score.replace('+','').replace(',','')
+    print( "Bot =", botName, " | Score =", score)
+
+
+def runResultParser( runText ):
+    mainplayername=""
+    player1name=""
+    player2name=""
+    player3name=""
+    i=0
+    lines = runText.split('\n')
+    if ( len(lines) == 5 ):
+        for line in lines:
+            # First Line Shall be Player Name
+            if ( i==0 ):
+                mainplayername=line
+                print( "mainplayername=", mainplayername )
+
+            # Second line shall/can be empty
+            #if (i==2)
+                #Do Nothing
+            # Three Following Lines Shall be player Score
+            if (i == 2):
+                player1name = splitBotScore(line)
+                #print( "player1name=", player1name )
+            if (i == 3):
+                player2name = splitBotScore(line)
+                #print( "player2name=", player2name )
+
+            if (i == 4):
+                player3name = splitBotScore(line)
+                #print( "player3name=", player3name )
+
+            i+=1
+        else:
+            print("Failed to parse result")
+    #return runResult
+
 def scanAndProcessImgDirectory( dir ):
     with os.scandir( dir ) as entries:
         for entry in entries:
@@ -54,22 +97,25 @@ def scanAndProcessImgDirectory( dir ):
             print("Processing ", filename)
             srcimg = Image.open(filename)
             runResult=pytesseract.image_to_string(MQCropImage(srcimg))
-            print( runResult )
+            runResultParser( runResult )
 
 
 def main():
     # If you don't have tesseract executable in your PATH, include the following:
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files (x86)\Tesseract-OCR\tesseract'
 
-    scanAndProcessImgDirectory("../Ressource")
+    #scanAndProcessImgDirectory("../Ressource")
 
     #imgpath = "../Ressource/Screenshot_20200614-123701_Mighty_Quest.jpg"
 
-    #srcimg = Image.open(imgpath)
+    srcimg = Image.open("../Ressource/Screenshot_20200614-102504.png")
+    cropimage=MQCropImage(srcimg)
+    #cropimage.show()
 
-    #runResult=pytesseract.image_to_string(MQCropImage(srcimg))
 
-    #print(runResult)
+    runResult=pytesseract.image_to_string(cropimage,config='--psm 6' )
+
+    print(runResult)
 
 if __name__ == "__main__":
     main()
